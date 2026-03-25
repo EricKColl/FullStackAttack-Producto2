@@ -78,7 +78,7 @@ Sus funciones principales son:
 - mostrar indicadores resumen
 - generar tarjetas dinámicas de publicaciones
 - permitir arrastrar tarjetas
-- permitir soltarlas en una zona de selección
+- - permitir soltarlas en una zona de selección y deseleccionarlas arrastrándolas de nuevo al panel superior
 - guardar dicha selección en IndexedDB
 - recuperar la selección ya guardada
 
@@ -158,8 +158,8 @@ Sus funciones principales son:
 3. El sistema debe generar tarjetas dinámicas a partir de las publicaciones almacenadas.
 4. Las tarjetas del dashboard deben diferenciar visualmente entre ofertas y demandas.
 5. Las tarjetas deben poder arrastrarse mediante la API Drag and Drop.
-6. Debe existir una zona de selección donde el usuario pueda soltar publicaciones.
-7. El sistema debe guardar en IndexedDB las publicaciones soltadas en la zona de selección.
+6. Debe existir una zona de selección donde el usuario pueda soltar publicaciones y desde la cual también pueda    deseleccionarlas arrastrándolas de nuevo al área principal.
+7. El sistema debe guardar en IndexedDB las publicaciones soltadas en la zona de selección y actualizar correctamente la información al eliminarlas de esa selección.
 8. El dashboard debe recuperar la selección guardada al volver a cargarse.
 9. La barra de navegación debe seguir mostrando el usuario activo.
 
