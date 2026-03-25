@@ -336,6 +336,28 @@ function guardarSeleccionDashboard(publicacion) {
   });
 }
 
+function eliminarSeleccionDashboard(idPublicacion) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const bd = await abrirBaseDeDatos();
+      const transaccion = bd.transaction(STORE_SELECCION, "readwrite");
+      const store = transaccion.objectStore(STORE_SELECCION);
+
+      store.delete(Number(idPublicacion));
+
+      transaccion.oncomplete = () => {
+        resolve(true);
+      };
+
+      transaccion.onerror = () => {
+        reject(transaccion.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 export {
   obtenerUsuarios,
   inicializarUsuarios,
@@ -351,5 +373,6 @@ export {
   registrarPublicacion,
   eliminarPublicacionPorId,
   obtenerSeleccionDashboard,
-  guardarSeleccionDashboard
+  guardarSeleccionDashboard,
+  eliminarSeleccionDashboard
 };

@@ -3,7 +3,8 @@ import {
   inicializarPublicaciones,
   obtenerPublicaciones,
   obtenerSeleccionDashboard,
-  guardarSeleccionDashboard
+  guardarSeleccionDashboard,
+  eliminarSeleccionDashboard
 } from "./almacenaje.js";
 import { pintarUsuarioEnNavbar, configurarBotonCerrarSesion } from "./ui.js";
 
@@ -21,7 +22,7 @@ async function inicializarDashboard() {
   await pintarResumen();
   await pintarPublicaciones();
   await pintarSeleccionDashboard();
-  configurarZonaDrop();
+  configurarZonasDrop();
 }
 
 async function pintarResumen() {
@@ -61,7 +62,7 @@ async function pintarPublicaciones() {
     const columna = document.createElement("div");
     columna.className = "col-12 col-md-6";
 
-    const tarjeta = crearTarjetaPublicacion(publicacion, true);
+    const tarjeta = crearTarjetaPublicacion(publicacion, true, "publicaciones");
     columna.appendChild(tarjeta);
 
     contenedorPublicaciones.appendChild(columna);
@@ -75,7 +76,7 @@ async function pintarSeleccionDashboard() {
     contenedorSeleccion.innerHTML = `
       <div class="col-12">
         <div class="alert alert-light border mb-0 text-center">
-          Todavía no has seleccionado ninguna publicación.
+          Todavía no has seleccionado ninguna publicación. Arrastra una tarjeta aquí y, si quieres quitarla, arrástrala de nuevo arriba.
         </div>
       </div>
     `;
@@ -88,14 +89,14 @@ async function pintarSeleccionDashboard() {
     const columna = document.createElement("div");
     columna.className = "col-12 col-md-6";
 
-    const tarjeta = crearTarjetaPublicacion(publicacion, false);
+    const tarjeta = crearTarjetaPublicacion(publicacion, true, "seleccion");
     columna.appendChild(tarjeta);
 
     contenedorSeleccion.appendChild(columna);
   });
 }
 
-function crearTarjetaPublicacion(publicacion, draggable) {
+function crearTarjetaPublicacion(publicacion, draggable, origen) {
   const tarjeta = document.createElement("div");
   tarjeta.className = "card card-publicacion h-100";
   tarjeta.draggable = draggable;
@@ -104,6 +105,7 @@ function crearTarjetaPublicacion(publicacion, draggable) {
   if (draggable) {
     tarjeta.addEventListener("dragstart", (evento) => {
       evento.dataTransfer.setData("text/plain", String(publicacion.id));
+      evento.dataTransfer.setData("application/jobconnect-origin", origen);
     });
   }
 
@@ -131,19 +133,38 @@ function crearTarjetaPublicacion(publicacion, draggable) {
   return tarjeta;
 }
 
-function configurarZonaDrop() {
-  if (!contenedorSeleccion) return;
+function leerDatosArrastre(evento) {
+  const idPublicacion = Number(evento.dataTransfer.getData("text/plain"));
+  const origen = evento.dataTransfer.getData("application/jobconnect-origin");
 
-  contenedorSeleccion.addEventListener("dragover", (evento) => {
+  return {
+    idPublicacion,
+    origen
+  };
+}
+
+function activarZonaDrop(contenedor, callbackDrop) {
+  if (!contenedor) return;
+
+  contenedor.addEventListener("dragover", (evento) => {
     evento.preventDefault();
+    contenedor.classList.add("drag-over");
   });
 
-  contenedorSeleccion.addEventListener("drop", async (evento) => {
-    evento.preventDefault();
+  contenedor.addEventListener("dragleave", () => {
+    contenedor.classList.remove("drag-over");
+  });
 
-    const idPublicacion = Number(
-      evento.dataTransfer.getData("text/plain")
-    );
+  contenedor.addEventListener("drop", async (evento) => {
+    evento.preventDefault();
+    contenedor.classList.remove("drag-over");
+    await callbackDrop(evento);
+  });
+}
+
+function configurarZonasDrop() {
+  activarZonaDrop(contenedorSeleccion, async (evento) => {
+    const { idPublicacion } = leerDatosArrastre(evento);
 
     if (!idPublicacion) {
       return;
@@ -159,6 +180,17 @@ function configurarZonaDrop() {
     }
 
     await guardarSeleccionDashboard(publicacionSeleccionada);
+    await pintarSeleccionDashboard();
+  });
+
+  activarZonaDrop(contenedorPublicaciones, async (evento) => {
+    const { idPublicacion, origen } = leerDatosArrastre(evento);
+
+    if (!idPublicacion || origen !== "seleccion") {
+      return;
+    }
+
+    await eliminarSeleccionDashboard(idPublicacion);
     await pintarSeleccionDashboard();
   });
 }
